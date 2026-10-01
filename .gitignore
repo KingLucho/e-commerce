@@ -1,0 +1,11 @@
+# Secretos locales por servicio
+**/.env
+!**/.env.example
+
+# Entornos y artefactos locales de Python
+.venv/
+**/__pycache__/
+*.py[cod]
+
+# Configuración local del IDE
+.idea/

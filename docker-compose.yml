@@ -1,0 +1,127 @@
+services:
+  usuarios-db:
+    image: postgres:16-alpine
+    env_file:
+      - ./servicios/usuarios/.env
+    ports:
+      - "5433:5432"
+    volumes:
+      - usuarios-db-data:/var/lib/postgresql/data
+    networks:
+      - ecommerce_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  productos-db:
+    image: postgres:16-alpine
+    env_file:
+      - ./servicios/productos/.env
+    ports:
+      - "5434:5432"
+    volumes:
+      - productos-db-data:/var/lib/postgresql/data
+    networks:
+      - ecommerce_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  ventas-db:
+    image: postgres:16-alpine
+    env_file:
+      - ./servicios/ventas/.env
+    ports:
+      - "5435:5432"
+    volumes:
+      - ventas-db-data:/var/lib/postgresql/data
+    networks:
+      - ecommerce_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  usuarios-api:
+    build:
+      context: ./servicios/placeholder
+    image: ecommerce-api-placeholder:local
+    env_file:
+      - ./servicios/usuarios/.env
+    environment:
+      SERVICE_NAME: usuarios
+    ports:
+      - "8001:8080"
+    depends_on:
+      usuarios-db:
+        condition: service_healthy
+    networks:
+      - ecommerce_net
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8080/health', timeout=2).read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  productos-api:
+    build:
+      context: ./servicios/placeholder
+    image: ecommerce-api-placeholder:local
+    env_file:
+      - ./servicios/productos/.env
+    environment:
+      SERVICE_NAME: productos
+    ports:
+      - "8002:8080"
+    depends_on:
+      productos-db:
+        condition: service_healthy
+    networks:
+      - ecommerce_net
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8080/health', timeout=2).read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  ventas-api:
+    build:
+      context: ./servicios/placeholder
+    image: ecommerce-api-placeholder:local
+    env_file:
+      - ./servicios/ventas/.env
+    environment:
+      SERVICE_NAME: ventas
+    ports:
+      - "8003:8080"
+    depends_on:
+      ventas-db:
+        condition: service_healthy
+    networks:
+      - ecommerce_net
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8080/health', timeout=2).read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+networks:
+  ecommerce_net:
+    name: ecommerce_net
+    driver: bridge
+
+volumes:
+  usuarios-db-data:
+  productos-db-data:
+  ventas-db-data:
